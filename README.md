@@ -3,7 +3,6 @@
 Production-style **strictly grounded** question answering over uploaded PDFs. The backend answers **only** from retrieved document chunks, includes **page citations**, refuses out-of-scope questions, and supports **English and Hindi** queries via prompt instructions to Gemini.
 
 **Evaluators:** see **[`EVALUATORS.md`](EVALUATORS.md)** for a concise architecture note, trade-offs, and test steps.  
-**Deploy / Vercel:** see **[`DEPLOYMENT.md`](DEPLOYMENT.md)** (full stack fits container hosts better than raw Vercel serverless).
 
 ## Architecture
 
