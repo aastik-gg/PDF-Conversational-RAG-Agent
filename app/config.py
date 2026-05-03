@@ -29,3 +29,7 @@ EMBEDDING_DEVICE = os.getenv("EMBEDDING_DEVICE", "").strip()
 RETRIEVAL_K = int(os.getenv("RETRIEVAL_K", "4"))
 CHUNK_SIZE_TOKENS = int(os.getenv("CHUNK_SIZE_TOKENS", "800"))
 CHUNK_OVERLAP_TOKENS = int(os.getenv("CHUNK_OVERLAP_TOKENS", "100"))
+
+# Low-RAM hosts (e.g. Render free ~512MB): smaller batches avoid OOM during indexing
+EMBEDDING_ENCODE_BATCH = int(os.getenv("EMBEDDING_ENCODE_BATCH", "8"))
+FAISS_INDEX_BATCH_SIZE = int(os.getenv("FAISS_INDEX_BATCH_SIZE", "16"))

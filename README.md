@@ -165,6 +165,7 @@ Import `postman/PDF_Agent.postman_collection.json` and set `baseUrl` if needed.
 
 ## Notes
 
+- **Render / low RAM (~512MB):** indexing uses **batched FAISS** and a small **`EMBEDDING_ENCODE_BATCH`** (see `app/config.py`). If uploads still OOM, set env `EMBEDDING_ENCODE_BATCH=4`, `FAISS_INDEX_BATCH_SIZE=8`, and `OMP_NUM_THREADS=1`, or use a **larger** Render instance.
 - **Grounding** is enforced by prompt design plus retrieval-only context; always review behavior on your PDFs.
 - For **scanned PDFs** without OCR, text extraction may fail — the API returns a clear error.
 - **Offline / air-gapped:** set `HF_HUB_OFFLINE=1` and pre-download the model into the HuggingFace cache, or point `SENTENCE_TRANSFORMERS_HOME` to a directory that already contains the weights.
