@@ -6,9 +6,9 @@
 
 services:
   - type: web
-    name: pdf-conversational-agent
+    name: pdf_conversational_agent
     runtime: python
-    region: oregon
+    region: singapore   
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
