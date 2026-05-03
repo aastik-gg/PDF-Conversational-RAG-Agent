@@ -3,6 +3,7 @@
 Production-style **strictly grounded** question answering over uploaded PDFs. The backend answers **only** from retrieved document chunks, includes **page citations**, refuses out-of-scope questions, and supports **English and Hindi** queries via prompt instructions to Gemini.
 
 **Evaluators:** see **[`EVALUATORS.md`](EVALUATORS.md)** for a concise architecture note, trade-offs, and test steps.  
+**Render timeouts / deploy:** see **[`DEPLOYMENT.md`](DEPLOYMENT.md)**.
 
 ## Architecture
 
@@ -34,7 +35,7 @@ flowchart LR
 cd <path-to-cloned-repo>
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements.txt -r requirements-dev.txt
 ```
 
 Edit `.env`:
@@ -156,6 +157,8 @@ Import `postman/PDF_Agent.postman_collection.json` and set `baseUrl` if needed.
 ├── tests/test_cases.py
 ├── tests/fixtures/PM_OneNight_MasterGuide.pdf
 ├── requirements.txt
+├── requirements-dev.txt
+├── build.sh              # Render: CPU torch first, then deps
 ├── .env
 └── README.md
 ```

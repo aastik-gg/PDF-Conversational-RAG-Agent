@@ -55,7 +55,7 @@ PDF → chunk → local embed → FAISS
 ```bash
 cd <path-to-cloned-repo>   
 python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements.txt -r requirements-dev.txt
 # Set .env (at least GOOGLE_API_KEY, GEMINI_MODEL)
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
