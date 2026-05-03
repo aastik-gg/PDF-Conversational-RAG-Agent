@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import logging
-
-from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_google_genai import ChatGoogleGenerativeAI
+from typing import TYPE_CHECKING
 
 from app import config
 from app.utils.prompts import GROUNDING_SYSTEM_PROMPT, build_user_prompt
+
+if TYPE_CHECKING:
+    from langchain_google_genai import ChatGoogleGenerativeAI
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,8 @@ _TRANSLATE_TEMPERATURE = 0.0
 
 
 def get_llm() -> ChatGoogleGenerativeAI:
+    from langchain_google_genai import ChatGoogleGenerativeAI
+
     if not config.GOOGLE_API_KEY:
         raise RuntimeError("GOOGLE_API_KEY is not set in the environment.")
     return ChatGoogleGenerativeAI(
@@ -31,6 +34,9 @@ def get_llm() -> ChatGoogleGenerativeAI:
 
 def translate_question_for_retrieval(non_english_question: str) -> str:
     """One-shot English paraphrase for vector search only (not grounded on PDF)."""
+    from langchain_core.messages import HumanMessage, SystemMessage
+    from langchain_google_genai import ChatGoogleGenerativeAI
+
     llm = ChatGoogleGenerativeAI(
         model=config.GEMINI_MODEL,
         google_api_key=config.GOOGLE_API_KEY,
@@ -52,6 +58,8 @@ def translate_question_for_retrieval(non_english_question: str) -> str:
 
 def generate_grounded_answer(context: str, question: str) -> str:
     """Invoke Gemini with strict system instructions and user context + question."""
+    from langchain_core.messages import HumanMessage, SystemMessage
+
     llm = get_llm()
     user_content = build_user_prompt(context=context, question=question)
     messages = [

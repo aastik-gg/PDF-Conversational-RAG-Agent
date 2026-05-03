@@ -8,21 +8,25 @@ import os
 import shutil
 import threading
 from pathlib import Path
-
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
-from langchain_core.documents import Document
+from typing import TYPE_CHECKING
 
 from app import config
+
+if TYPE_CHECKING:
+    from langchain_community.embeddings import HuggingFaceEmbeddings
+    from langchain_community.vectorstores import FAISS
+    from langchain_core.documents import Document
 
 logger = logging.getLogger(__name__)
 
 _embeddings_lock = threading.Lock()
-_embeddings: HuggingFaceEmbeddings | None = None
+_embeddings = None  # lazy: HuggingFaceEmbeddings
 
 
 def get_embeddings() -> HuggingFaceEmbeddings:
     """Lazy singleton: loads the SentenceTransformer model once per process."""
+    from langchain_community.embeddings import HuggingFaceEmbeddings
+
     global _embeddings
     with _embeddings_lock:
         if _embeddings is None:
@@ -56,6 +60,8 @@ def vectorstore_path_for(document_id: str) -> Path:
 
 def build_and_save_faiss(documents: list[Document], document_id: str) -> Path:
     """Create a FAISS index from chunked documents and persist it to disk."""
+    from langchain_community.vectorstores import FAISS
+
     embeddings = get_embeddings()
     out = vectorstore_path_for(document_id)
     if out.exists():
@@ -85,6 +91,8 @@ def build_and_save_faiss(documents: list[Document], document_id: str) -> Path:
 
 def load_faiss(document_id: str) -> FAISS:
     """Load a persisted FAISS store; requires the same embedding model as at index time."""
+    from langchain_community.vectorstores import FAISS
+
     path = vectorstore_path_for(document_id)
     if not path.exists():
         raise FileNotFoundError(f"No vector index found for document id {document_id}.")

@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_core.documents import Document
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from typing import TYPE_CHECKING
 
 from app import config
+
+if TYPE_CHECKING:
+    from langchain_core.documents import Document
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +26,8 @@ def _page_display_number(metadata: dict) -> int | None:
 
 def load_pdf_documents(pdf_path: Path) -> list[Document]:
     """Load all pages from a PDF as LangChain documents with page metadata."""
+    from langchain_community.document_loaders import PyPDFLoader
+
     loader = PyPDFLoader(str(pdf_path))
     docs = loader.load()
     if not docs:
@@ -39,6 +41,8 @@ def load_pdf_documents(pdf_path: Path) -> list[Document]:
 
 def chunk_documents(documents: list[Document]) -> list[Document]:
     """Split documents into overlapping chunks; preserve page_number in metadata."""
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+
     splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
         encoding_name="cl100k_base",
         chunk_size=config.CHUNK_SIZE_TOKENS,

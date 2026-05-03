@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import logging
-
-from langchain_community.vectorstores import FAISS
-from langchain_core.documents import Document
+from typing import TYPE_CHECKING
 
 from app import config
+
+if TYPE_CHECKING:
+    from langchain_core.documents import Document
+
 from app.services.embeddings import load_faiss
 
 logger = logging.getLogger(__name__)
@@ -30,6 +32,8 @@ def build_context_string(docs: list[Document]) -> str:
 
 def retrieve_for_question(document_id: str, question: str, k: int | None = None) -> list[Document]:
     """Similarity search over the FAISS index for this document."""
+    from langchain_community.vectorstores import FAISS
+
     k = k or config.RETRIEVAL_K
     store: FAISS = load_faiss(document_id)
     docs = store.similarity_search(question, k=k)
