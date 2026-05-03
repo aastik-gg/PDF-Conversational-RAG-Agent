@@ -7,7 +7,21 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const base = (process.env.API_BASE_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
+
+// Browsers never see this — only this Node script runs on `npm run build` (locally or on Vercel).
+const onVercel = process.env.VERCEL === "1";
+const raw = process.env.API_BASE_URL;
+if (onVercel && (!raw || !String(raw).trim())) {
+  console.error(
+    "Vercel: set API_BASE_URL in Project → Settings → Environment Variables " +
+      "(Production + Preview), e.g. https://your-service.onrender.com — then redeploy."
+  );
+  process.exit(1);
+}
+const base = (raw && String(raw).trim() ? String(raw).trim() : "http://127.0.0.1:8000").replace(
+  /\/$/,
+  ""
+);
 const tplPath = path.join(__dirname, "template.html");
 const outDir = path.join(__dirname, "public");
 const outPath = path.join(outDir, "index.html");

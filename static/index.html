@@ -136,6 +136,18 @@
       el.className = "log" + (cls ? " " + cls : "");
     }
 
+    function formatFetchError(err) {
+      const raw = String(err && err.message ? err.message : err);
+      if (raw === "Failed to fetch" || (err && err.name === "TypeError")) {
+        return (
+          raw +
+          " — Same-origin calls only: open this UI from the API host (e.g. your Render URL), or use the Vercel build with API_BASE_URL. " +
+          "If the request ran a long time, the connection may have dropped while the server still finished (see Render logs)."
+        );
+      }
+      return raw;
+    }
+
     reindexBtn.addEventListener("click", async () => {
       reindexBtn.disabled = true;
       uploadStatus.textContent = "Reindexing…";
@@ -148,7 +160,7 @@
           `Reindexed: ${data.chunks} chunks (${data.document_id}).`;
         uploadStatus.className = "sub ok";
       } catch (e) {
-        uploadStatus.textContent = String(e.message || e);
+        uploadStatus.textContent = formatFetchError(e);
         uploadStatus.className = "sub error";
       } finally {
         reindexBtn.disabled = false;
@@ -175,7 +187,7 @@
           `Ready: ${data.chunks} chunks indexed (${data.document_id}).`;
         uploadStatus.className = "sub ok";
       } catch (e) {
-        uploadStatus.textContent = String(e.message || e);
+        uploadStatus.textContent = formatFetchError(e);
         uploadStatus.className = "sub error";
       } finally {
         uploadBtn.disabled = false;
@@ -204,7 +216,7 @@
         const extra = cites ? `\n\n[Cited pages from retrieval: ${cites}]` : "";
         show(answerEl, (data.answer || "") + extra, "ok");
       } catch (e) {
-        show(answerEl, String(e.message || e), "error");
+        show(answerEl, formatFetchError(e), "error");
       } finally {
         askBtn.disabled = false;
       }

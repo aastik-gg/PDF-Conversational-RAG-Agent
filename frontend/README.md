@@ -2,6 +2,8 @@
 
 Build injects your **Render API URL** into `public/index.html`.
 
+**There is no runtime “frontend env” for the API URL.** The static page is just HTML/JS; `API_BASE_URL` is read **only when Node runs `build.mjs`** (your machine or Vercel’s build). Whatever you last built is what you see in `public/index.html` (that file is gitignored; do not hand-edit it for deploys).
+
 ## Vercel project settings
 
 1. **Root Directory:** `frontend` (in the Vercel dashboard: Project → Settings → General).

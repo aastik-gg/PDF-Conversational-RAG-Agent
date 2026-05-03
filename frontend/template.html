@@ -138,6 +138,19 @@
       el.className = "log" + (cls ? " " + cls : "");
     }
 
+    /** Browser hides CORS / TLS / dropped connections behind this generic message. */
+    function formatFetchError(err) {
+      const raw = String(err && err.message ? err.message : err);
+      if (raw === "Failed to fetch" || (err && err.name === "TypeError")) {
+        return (
+          raw +
+          " — Often: wrong API base URL, CORS (set Render CORS_ORIGINS to this page’s origin), " +
+          "HTTPS→HTTP blocked, or the tab lost the connection while Render still completed the upload (check Render logs / Network tab)."
+        );
+      }
+      return raw;
+    }
+
     reindexBtn.addEventListener("click", async () => {
       reindexBtn.disabled = true;
       uploadStatus.textContent = "Reindexing…";
@@ -150,7 +163,7 @@
           `Reindexed: ${data.chunks} chunks (${data.document_id}).`;
         uploadStatus.className = "sub ok";
       } catch (e) {
-        uploadStatus.textContent = String(e.message || e);
+        uploadStatus.textContent = formatFetchError(e);
         uploadStatus.className = "sub error";
       } finally {
         reindexBtn.disabled = false;
@@ -177,7 +190,7 @@
           `Ready: ${data.chunks} chunks indexed (${data.document_id}).`;
         uploadStatus.className = "sub ok";
       } catch (e) {
-        uploadStatus.textContent = String(e.message || e);
+        uploadStatus.textContent = formatFetchError(e);
         uploadStatus.className = "sub error";
       } finally {
         uploadBtn.disabled = false;
@@ -206,7 +219,7 @@
         const extra = cites ? `\n\n[Cited pages from retrieval: ${cites}]` : "";
         show(answerEl, (data.answer || "") + extra, "ok");
       } catch (e) {
-        show(answerEl, String(e.message || e), "error");
+        show(answerEl, formatFetchError(e), "error");
       } finally {
         askBtn.disabled = false;
       }
