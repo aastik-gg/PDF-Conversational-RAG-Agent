@@ -8,7 +8,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from app.document_state import document_state
@@ -61,6 +61,12 @@ app.include_router(chat.router)
 
 if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+
+@app.head("/")
+def head_root() -> Response:
+    """Render / probes often use HEAD; GET-only routes return 405 otherwise."""
+    return Response(status_code=200)
 
 
 @app.get("/", response_model=None)
