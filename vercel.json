@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "excludeFiles": [
+    ".venv/**",
+    "tests/**",
+    "vectorstore/**",
+    "data/**",
+    "**/__pycache__/**",
+    ".pytest_cache/**"
+  ]
+}
