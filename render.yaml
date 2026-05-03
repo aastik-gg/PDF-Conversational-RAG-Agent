@@ -1,0 +1,17 @@
+# Render Blueprint — native Python (no Docker).
+# https://render.com/docs/blueprint-spec
+#
+# After deploy, set in the Render dashboard (Environment):
+#   GOOGLE_API_KEY, GEMINI_MODEL, CORS_ORIGINS (your Vercel URL), optional HF_* vars
+
+services:
+  - type: web
+    name: pdf-conversational-agent
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"

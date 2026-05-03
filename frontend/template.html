@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Conversational Agent</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0f1419;
+      --panel: #1a2332;
+      --text: #e7ecf3;
+      --muted: #9aa7b8;
+      --accent: #3b82f6;
+      --border: #2a3648;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+    }
+    h1 { margin: 0; font-size: 1.15rem; font-weight: 600; }
+    p.sub { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.9rem; }
+    main {
+      flex: 1;
+      max-width: 880px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+    }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.35rem; }
+    input[type="file"] { width: 100%; color: var(--muted); }
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      resize: vertical;
+      background: #0b1017;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.65rem 0.75rem;
+      font-size: 0.95rem;
+    }
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.55rem 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+    button.secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    button.secondary:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .log {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.82rem;
+      white-space: pre-wrap;
+      background: #0b1017;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem;
+      min-height: 140px;
+      color: #c8d2e0;
+    }
+    .error { color: #f87171; }
+    .ok { color: #4ade80; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>PDF Conversational Agent</h1>
+    <p class="sub">Upload a PDF, then ask questions. API: <code id="apiHint">__API_BASE__</code></p>
+  </header>
+  <main>
+    <section class="card">
+      <label for="pdf">PDF file</label>
+      <div class="row">
+        <input id="pdf" type="file" accept="application/pdf" />
+        <button id="uploadBtn" type="button">Upload</button>
+        <button id="reindexBtn" type="button" class="secondary">Reindex</button>
+      </div>
+      <p class="sub" style="margin-top:0.45rem; font-size:0.8rem;">
+        <strong>Reindex</strong> rebuilds FAISS on the server for the active PDF.
+      </p>
+      <p id="uploadStatus" class="sub"></p>
+    </section>
+    <section class="card">
+      <label for="question">Your question (English or Hindi)</label>
+      <textarea id="question" placeholder="What does the document say about…?"></textarea>
+      <div class="row" style="margin-top:0.6rem;">
+        <button id="askBtn" type="button">Ask</button>
+      </div>
+    </section>
+    <section class="card">
+      <label>Response</label>
+      <div id="answer" class="log"></div>
+    </section>
+  </main>
+  <script>
+    const API_BASE = "__API_BASE__".replace(/\/$/, "");
+
+    const uploadBtn = document.getElementById("uploadBtn");
+    const reindexBtn = document.getElementById("reindexBtn");
+    const askBtn = document.getElementById("askBtn");
+    const pdfInput = document.getElementById("pdf");
+    const questionEl = document.getElementById("question");
+    const answerEl = document.getElementById("answer");
+    const uploadStatus = document.getElementById("uploadStatus");
+
+    function show(el, text, cls) {
+      el.textContent = text;
+      el.className = "log" + (cls ? " " + cls : "");
+    }
+
+    reindexBtn.addEventListener("click", async () => {
+      reindexBtn.disabled = true;
+      uploadStatus.textContent = "Reindexing…";
+      uploadStatus.className = "sub";
+      try {
+        const res = await fetch(API_BASE + "/reindex", { method: "POST" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.detail || res.statusText);
+        uploadStatus.textContent =
+          `Reindexed: ${data.chunks} chunks (${data.document_id}).`;
+        uploadStatus.className = "sub ok";
+      } catch (e) {
+        uploadStatus.textContent = String(e.message || e);
+        uploadStatus.className = "sub error";
+      } finally {
+        reindexBtn.disabled = false;
+      }
+    });
+
+    uploadBtn.addEventListener("click", async () => {
+      const f = pdfInput.files[0];
+      if (!f) {
+        uploadStatus.textContent = "Choose a PDF first.";
+        uploadStatus.className = "sub error";
+        return;
+      }
+      uploadBtn.disabled = true;
+      uploadStatus.textContent = "Uploading…";
+      uploadStatus.className = "sub";
+      const fd = new FormData();
+      fd.append("file", f);
+      try {
+        const res = await fetch(API_BASE + "/upload", { method: "POST", body: fd });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.detail || res.statusText);
+        uploadStatus.textContent =
+          `Ready: ${data.chunks} chunks indexed (${data.document_id}).`;
+        uploadStatus.className = "sub ok";
+      } catch (e) {
+        uploadStatus.textContent = String(e.message || e);
+        uploadStatus.className = "sub error";
+      } finally {
+        uploadBtn.disabled = false;
+      }
+    });
+
+    askBtn.addEventListener("click", async () => {
+      const q = questionEl.value.trim();
+      if (!q) {
+        show(answerEl, "Enter a question.", "error");
+        return;
+      }
+      askBtn.disabled = true;
+      show(answerEl, "Thinking…", "");
+      try {
+        const res = await fetch(API_BASE + "/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: q }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.detail || res.statusText);
+        const cites = (data.citations || [])
+          .map((c) => "Page " + c.page)
+          .join(", ");
+        const extra = cites ? `\n\n[Cited pages from retrieval: ${cites}]` : "";
+        show(answerEl, (data.answer || "") + extra, "ok");
+      } catch (e) {
+        show(answerEl, String(e.message || e), "error");
+      } finally {
+        askBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

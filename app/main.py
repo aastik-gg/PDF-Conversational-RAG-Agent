@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -25,6 +26,22 @@ logger = logging.getLogger("pdf_agent")
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
+
+def _cors_settings() -> tuple[list[str], bool]:
+    """
+    CORS_ORIGINS: comma-separated list, e.g.
+    https://your-app.vercel.app,https://www.yourdomain.com
+    Use * for local dev only (credentials disabled — browser rules).
+    """
+    raw = os.getenv("CORS_ORIGINS", "*").strip()
+    if not raw or raw == "*":
+        return ["*"], False
+    origins = [o.strip() for o in raw.split(",") if o.strip()]
+    return origins, True
+
+
+_cors_origins, _cors_credentials = _cors_settings()
+
 app = FastAPI(
     title="PDF Conversational Agent",
     description="Strictly grounded Q&A over uploaded PDFs (English / Hindi).",
@@ -33,8 +50,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_cors_origins,
+    allow_credentials=_cors_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
