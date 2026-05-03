@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import gc
 import logging
+import os
 import shutil
 import threading
 from pathlib import Path
@@ -24,9 +26,18 @@ def get_embeddings() -> HuggingFaceEmbeddings:
     global _embeddings
     with _embeddings_lock:
         if _embeddings is None:
+            try:
+                import torch
+
+                threads = int(os.getenv("TORCH_NUM_THREADS", "1"))
+                torch.set_num_threads(max(1, threads))
+            except ImportError:
+                pass
             model_kwargs: dict = {}
             if config.EMBEDDING_DEVICE:
                 model_kwargs["device"] = config.EMBEDDING_DEVICE
+            if config.LOW_RAM:
+                model_kwargs["model_kwargs"] = {"low_cpu_mem_usage": True}
             _embeddings = HuggingFaceEmbeddings(
                 model_name=config.HF_EMBEDDING_MODEL,
                 model_kwargs=model_kwargs,
@@ -61,10 +72,12 @@ def build_and_save_faiss(documents: list[Document], document_id: str) -> Path:
     if n == 0:
         raise ValueError("No documents to index.")
     store = FAISS.from_documents(documents[:batch], embeddings)
+    gc.collect()
     for start in range(batch, n, batch):
         end = min(start + batch, n)
         store.add_documents(documents[start:end])
         logger.info("Indexed chunks %d–%d of %d", start, end - 1, n)
+        gc.collect()
     store.save_local(str(out))
     logger.info("Saved FAISS index to %s", out)
     return out
